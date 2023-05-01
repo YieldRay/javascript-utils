@@ -1,26 +1,36 @@
 import { createServer } from "node:http";
 import { createReadStream, readdirSync, existsSync, statSync } from "node:fs";
+import type { IncomingMessage, ServerResponse } from "node:http";
 
 function contentTypeMiddleware(
-    mapping = {
+    mapping: Record<string, string> = {
         htm: "text/html",
         html: "text/html",
         xhtml: "application/xhtml+xml",
         js: "text/javascript",
         mjs: "text/javascript",
+        cjs: "text/javascript",
         css: "text/css",
+        sh: "application/x-sh",
         txt: "text/plain",
+        csv: "text/csv",
         json: "application/json",
         xml: "application/xml",
+        svg: "image/svg+xml",
         jpg: "image/jpeg",
         jpeg: "image/jpeg",
         png: "image/png",
+        gif: "image/gif",
         webp: "image/webp",
+        pdf: "application/pdf",
+        wav: "audio/wav",
+        mp3: "audio/mp3",
+        mp4: "video/mpeg4",
         bin: "application/octet-stream",
     }
 ) {
-    return (req, res) => {
-        const basename = req.url.slice(1).split("/").reverse()[0];
+    return (req: IncomingMessage, res: ServerResponse) => {
+        const basename = req.url?.slice(1).split("/").reverse()[0] || "";
         if (basename.includes(".")) {
             const ext = basename.split(".").reverse()[0];
             const ct = mapping[ext];
@@ -32,11 +42,11 @@ function contentTypeMiddleware(
 }
 
 function staticMiddleware(pathPrefix = ".", disableIndex = false) {
-    return (req, res) => {
+    return (req: IncomingMessage, res: ServerResponse) => {
         const filepath =
             pathPrefix +
             (() => {
-                const path = req.url;
+                const path = req.url || "";
                 if (path.endsWith("/")) {
                     res.setHeader("content-type", "text/html");
                     return path + "index.html";
@@ -51,8 +61,8 @@ function staticMiddleware(pathPrefix = ".", disableIndex = false) {
             // index.html does not exists here
             res.setHeader("content-type", "text/html");
             if (!disableIndex && filepath.endsWith("/index.html")) {
-                // send dynamic index
-                const dir = filepath.replace(/index.html$/, "");
+                // send dynamic index.html
+                const dir = filepath.replace(/index\.html$/, "");
                 const lis = readdirSync(dir).map((name) => {
                     const stat = statSync(dir + name);
                     if (stat.isFile()) return `<li><a href="${name}">${name}</a></li>`;
@@ -82,4 +92,4 @@ export default function host(port = 8080, pathPrefix = ".", disableIndex = false
 }
 
 // Usage:
-host(8080);
+// host(8080);

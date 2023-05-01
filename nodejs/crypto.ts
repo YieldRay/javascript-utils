@@ -1,21 +1,27 @@
 import crypto from "node:crypto";
 
-function curry(func) {
-    return function curried(...args) {
+// the type is uncomplete
+function curry(func: Function) {
+    return function curried(...args: any) {
         if (args.length >= func.length) {
             return func.apply(this, args);
         } else {
-            return function (...args2) {
+            return function (...args2: any) {
                 return curried.apply(this, args.concat(args2));
             };
         }
     };
 }
 
-const createHash = (algorithm, data, digest = "hex") => crypto.createHash(algorithm).update(data).digest(digest);
+const createHash = (algorithm: string, data: crypto.BinaryLike, digest: crypto.BinaryToTextEncoding = "hex") =>
+    crypto.createHash(algorithm).update(data).digest(digest);
 
-const createHmac = (algorithm, data, salt, digest = "hex") =>
-    crypto.createHmac(algorithm, salt).update(data).digest(digest);
+const createHmac = (
+    algorithm: string,
+    data: crypto.BinaryLike,
+    salt: crypto.BinaryLike | crypto.KeyObject,
+    digest: crypto.BinaryToTextEncoding = "hex"
+) => crypto.createHmac(algorithm, salt).update(data).digest(digest);
 
 const genHash = curry((algorithm, data) => crypto.createHash(algorithm).update(data).digest("hex"));
 
