@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { createReadStream, readdirSync, existsSync, statSync } from "node:fs";
+import type { IncomingMessage, ServerResponse } from "node:http";
 
 function contentTypeMiddleware(
     mapping = {
@@ -19,8 +20,8 @@ function contentTypeMiddleware(
         bin: "application/octet-stream",
     }
 ) {
-    return (req, res) => {
-        const basename = req.url.slice(1).split("/").reverse()[0];
+    return (req: IncomingMessage, res: ServerResponse) => {
+        const basename = req.url?.slice(1).split("/").reverse()[0] || "";
         if (basename.includes(".")) {
             const ext = basename.split(".").reverse()[0];
             const ct = mapping[ext];
@@ -32,11 +33,11 @@ function contentTypeMiddleware(
 }
 
 function staticMiddleware(pathPrefix = ".", disableIndex = false) {
-    return (req, res) => {
+    return (req: IncomingMessage, res: ServerResponse) => {
         const filepath =
             pathPrefix +
             (() => {
-                const path = req.url;
+                const path = req.url || "";
                 if (path.endsWith("/")) {
                     res.setHeader("content-type", "text/html");
                     return path + "index.html";
@@ -82,4 +83,4 @@ export default function host(port = 8080, pathPrefix = ".", disableIndex = false
 }
 
 // Usage:
-host(8080);
+// host(8080);

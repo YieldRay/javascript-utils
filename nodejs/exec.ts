@@ -3,8 +3,8 @@ import { promisify } from "node:util";
 
 const exec = promisify(_exec); // => { stdout, stderr }
 
-const system = (cmd) =>
-    execSync(cmd, {
+const system = (command: string) =>
+    execSync(command, {
         stdio: ["inherit", "inherit", "inherit"],
     });
 

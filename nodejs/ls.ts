@@ -1,8 +1,8 @@
 import { opendir } from "node:fs/promises";
 
 async function ls(path = "./", showHiddden = false) {
-    const files = [];
-    const folders = [];
+    const files: string[] = [];
+    const folders: string[] = [];
 
     const dir = await opendir(path);
     for await (const dirent of dir) {
