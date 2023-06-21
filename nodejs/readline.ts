@@ -19,7 +19,6 @@ type QuestionFn = {
 const question: QuestionFn = promisify(rl.question).bind(rl);
 const quit = () => process.stdin.unref();
 
-
 export { title, rl, question, quit };
 
 // Usage:

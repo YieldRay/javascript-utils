@@ -3,7 +3,7 @@ import { createReadStream, readdirSync, existsSync, statSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 function contentTypeMiddleware(
-    mapping = {
+    mapping: Record<string, string> = {
         htm: "text/html",
         html: "text/html",
         xhtml: "application/xhtml+xml",
