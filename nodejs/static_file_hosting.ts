@@ -52,8 +52,8 @@ function staticMiddleware(pathPrefix = ".", disableIndex = false) {
             // index.html does not exists here
             res.setHeader("content-type", "text/html");
             if (!disableIndex && filepath.endsWith("/index.html")) {
-                // send dynamic index
-                const dir = filepath.replace(/index.html$/, "");
+                // send dynamic index.html
+                const dir = filepath.replace(/index\.html$/, "");
                 const lis = readdirSync(dir).map((name) => {
                     const stat = statSync(dir + name);
                     if (stat.isFile()) return `<li><a href="${name}">${name}</a></li>`;
