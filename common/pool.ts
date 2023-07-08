@@ -3,25 +3,12 @@
  * need polyfill in node.js!
  */
 
-type TaskStatus = "pending" | "fulfilled" | "rejected";
+type TaskStatus = "unstarted" | "pending" | "fulfilled" | "rejected";
 
-type LabeledPromise<T, ID extends number = number> = {
-    id: ID;
+type LabeledTask<T> = {
     status: TaskStatus;
-    task: Promise<{ id: ID; value: T }>;
+    task: () => Promise<T>;
 };
-
-export class PoolResolveEvent<T> extends CustomEvent<T> {
-    constructor(detail: T) {
-        super("resolve", { detail });
-    }
-}
-
-export class PoolRejectEvent<T> extends CustomEvent<T> {
-    constructor(detail: T) {
-        super("reject", { detail });
-    }
-}
 
 /**
  * for making addEventListener() & removeEventListener() have type hints
@@ -30,50 +17,49 @@ class NamedEventTarget<T extends string = string> extends EventTarget {
     addEventListener(
         type: T,
         listener: EventListenerOrEventListenerObject | null,
-        options?: boolean | AddEventListenerOptions | undefined
+        options?: boolean | AddEventListenerOptions
     ): void {
         super.addEventListener(type, listener, options);
     }
     removeEventListener(
         type: T,
         callback: EventListenerOrEventListenerObject | null,
-        options?: boolean | EventListenerOptions | undefined
+        options?: boolean | EventListenerOptions
     ): void {
         super.removeEventListener(type, callback, options);
     }
 }
 
-export class TaskPool<T = any> extends NamedEventTarget<"resolve" | "reject"> {
+/**
+ * a task pool that allows limit count of task to run concurrently
+ */
+export class TaskPool<T = any> extends NamedEventTarget<Exclude<TaskStatus, "unstarted">> {
     #poolLimit: number;
-    #pool: LabeledPromise<T>[] = [];
-    #count = 0; // for id
+    #pool: LabeledTask<T>[] = [];
     #isRunning = false;
 
-    get #pending() {
-        return this.#pool.filter((e) => e.status === "pending");
-    }
-
-    constructor(poolLimit: number = 2) {
+    constructor(poolLimit: number) {
         super();
+        if (poolLimit <= 0) throw new Error(`poolLimit should be more than zero, receive ${poolLimit}`);
         this.#poolLimit = poolLimit;
     }
 
-    submit(...tasks: Promise<T>[]) {
-        // when submit, add unique id for finding
+    submit(...tasks: (() => Promise<T>)[]) {
         for (const task of tasks) {
-            const id = this.#count++;
             this.#pool.push({
-                id,
-                status: "pending",
-                task: new Promise<{ id: number; value: T }>((resolve, reject) => {
-                    task.then((fulfillment) => resolve({ id, value: fulfillment })).catch((rejection) =>
-                        reject({ id, value: rejection })
-                    );
-                }),
+                status: "unstarted",
+                task: () =>
+                    new Promise<T>((resolve, reject) => {
+                        const promise = task();
+                        if (isPromise(promise))
+                            promise.then((fulfillment) => resolve(fulfillment)).catch((rejection) => reject(rejection));
+                        // if not a promise, simply call resolve()
+                        else resolve(promise);
+                    }),
             });
         }
         // start promise
-        setTimeout(() => this.#do(), 0);
+        this.#do();
     }
 
     async #do() {
@@ -81,25 +67,42 @@ export class TaskPool<T = any> extends NamedEventTarget<"resolve" | "reject"> {
         if (this.#isRunning) return;
         this.#isRunning = true;
 
-        while (this.#pending.length > 0) {
-            const labeledTasks = this.#pending.slice(0, this.#poolLimit).map((e) => e.task);
+        const getUnstarted = () => this.#pool.filter((e) => e.status === "unstarted");
+        const getPending = () => this.#pool.filter((e) => e.status === "pending");
 
-            await Promise.race(labeledTasks)
-                .then(({ id, value }) => {
-                    // change state
-                    this.#pool.find((e) => e.id === id)!.status = "fulfilled";
-                    // event
-                    this.dispatchEvent(new PoolResolveEvent(value));
-                })
-                .catch(({ id, value }) => {
-                    // change state
-                    this.#pool.find((e) => e.id === id)!.status = "rejected";
-                    // event
-                    this.dispatchEvent(new PoolRejectEvent(value));
-                });
+        while (getUnstarted().length > 0) {
+            const labeledTasks = getUnstarted().slice(0, this.#poolLimit - getPending().length);
+
+            const raceList = labeledTasks.map((labeledTask) => {
+                const dispatchEvent = (status: TaskStatus, detail: any) => {
+                    labeledTask.status = status;
+                    // this.#pool.find((e) => e.id === id)!.status = status;
+                    this.dispatchEvent(new CustomEvent(status, { detail }));
+                };
+
+                const promise = labeledTask.task();
+                dispatchEvent("pending", promise);
+
+                return promise
+                    .then((data) => {
+                        dispatchEvent("fulfilled", data);
+                    })
+                    .catch((data) => {
+                        dispatchEvent("rejected", data);
+                    });
+            });
+
+            await Promise.race(raceList);
         }
 
         // release lock
         this.#isRunning = false;
     }
+}
+
+/**
+ * we need standard Promise, rather than PromiseLike
+ */
+function isPromise<T>(obj: unknown): obj is Promise<T> {
+    return Object.prototype.toString.call(obj).slice(8, -1) === "Promise";
 }
