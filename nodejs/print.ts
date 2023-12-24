@@ -5,7 +5,9 @@ type WriteFn = {
 
 const print: WriteFn = process.stdout.write.bind(process.stdout);
 const eprint: WriteFn = process.stderr.write.bind(process.stderr);
+//@ts-ignore
 const println: WriteFn = (s, ...args) => print(s + "\n", ...args);
+//@ts-ignore
 const eprintln: WriteFn = (s, ...args) => eprint(s + "\n", ...args);
 
 const printToStartOfLine = (() => {
