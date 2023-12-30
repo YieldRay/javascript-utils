@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-// the type is uncomplete
+// the type is incomplete
 function curry(func: Function) {
     return function curried(...args: any) {
         if (args.length >= func.length) {

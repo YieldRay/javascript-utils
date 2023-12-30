@@ -8,10 +8,10 @@ export class AttemptTimeoutError extends Error {
 }
 
 export class RetryError extends Error {
-    attemtps: number;
+    attempts: number;
     constructor(attempts: number) {
         super(`Retrying exceeded the maxAttempts (${attempts}).`);
-        this.attemtps = attempts;
+        this.attempts = attempts;
         this.name = "RetryError";
     }
 }
