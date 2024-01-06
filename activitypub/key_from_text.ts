@@ -33,10 +33,10 @@ export async function importPublicKey(pem: string): Promise<CryptoKey> {
 }
 
 function pemToBuffer(pem: string, label: "PRIVATE KEY" | "PUBLIC KEY") {
+    const trimmed = pem.trim();
     const pemHeader = `-----BEGIN ${label}-----`;
-    const pemFooter = "-----END ${label}-----";
-
-    const pemContents = pem.replace(pemHeader, "").replace(pemFooter, "").replace(/\s/g, "");
+    const pemFooter = `-----END ${label}-----`;
+    const pemContents = trimmed.substring(pemHeader.length, trimmed.length - pemFooter.length);
 
     const binaryString = atob(pemContents);
     const binaryBuffer = new Uint8Array(binaryString.length);

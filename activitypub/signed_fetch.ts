@@ -2,9 +2,11 @@ import { encodeBase64 } from "./base64.ts";
 import { signDataAsBase64 } from "./key_use.ts";
 
 /**
- * `key` should be `CryptoKey`
+ * `key` should be `CryptoKey`, use private key to sign and public key to verify
  *
  * `keyId` should be like `https://example.net/actor#main-key`
+ *
+ * see: [rfc7033](https://datatracker.ietf.org/doc/html/rfc7033#section-3.1)  [mastodon docs](https://docs.joinmastodon.org/spec/security/)
  */
 export async function signedFetch(
     { key, keyId }: { key: CryptoKey; keyId: string },
@@ -14,6 +16,7 @@ export async function signedFetch(
     const req = new Request(input, init);
     const url = new URL(req.url);
 
+    // digest for request body
     const digest = "sha-256=" + encodeBase64(await crypto.subtle.digest("SHA-256", await req.arrayBuffer()));
 
     const date = new Date().toUTCString();
@@ -27,6 +30,7 @@ export async function signedFetch(
 
     const toBeSignature = {
         keyId: encodeURIComponent(keyId),
+        algorithm: "rsa-sha256",
         headers: Object.keys(headersToSign).join(" "),
         signature: await signDataAsBase64(
             key,

@@ -1,3 +1,5 @@
+import { encodeBase64 } from "./base64.ts";
+
 export async function generateRSAKeyPair(): Promise<{
     privateKey: CryptoKey;
     publicKey: CryptoKey;
@@ -30,31 +32,16 @@ export async function exportKeyPair(keyPair: CryptoKeyPair): Promise<{
 
 export async function exportPrivateKey(key: CryptoKey): Promise<string> {
     const exportedKey = await crypto.subtle.exportKey("pkcs8", key);
-    const exportedPem = arrayBufferToPem(exportedKey, "PRIVATE KEY");
-    return exportedPem;
+    return arrayBufferToPem(exportedKey, "PRIVATE KEY");
 }
 
 export async function exportPublicKey(key: CryptoKey): Promise<string> {
     const exportedKey = await crypto.subtle.exportKey("spki", key);
-    const exportedPem = arrayBufferToPem(exportedKey, "PUBLIC KEY");
-    return exportedPem;
+    return arrayBufferToPem(exportedKey, "PUBLIC KEY");
 }
 
 function arrayBufferToPem(buffer: ArrayBuffer, label: "PRIVATE KEY" | "PUBLIC KEY") {
     const pemHeader = `-----BEGIN ${label}-----`;
     const pemFooter = `-----END ${label}-----`;
-
-    const binary = String.fromCharCode.apply(null, new Uint8Array(buffer) as any as number[]);
-    const base64 = btoa(binary);
-
-    let pem = pemHeader + "\n";
-    let offset = 0;
-
-    while (offset < base64.length) {
-        const line = base64.substr(offset, 64);
-        pem += line + "\n";
-        offset += 64;
-    }
-    pem += pemFooter + "\n";
-    return pem;
+    return `${pemHeader}\n${encodeBase64(buffer)}${pemFooter}`;
 }
