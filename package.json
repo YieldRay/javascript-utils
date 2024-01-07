@@ -3,5 +3,8 @@
     "type": "module",
     "devDependencies": {
         "@types/node": "^20.10.6"
+    },
+    "dependencies": {
+        "@libsql/client": "^0.4.0-pre.7"
     }
 }
