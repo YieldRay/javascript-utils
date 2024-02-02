@@ -17,7 +17,7 @@ export async function cjsImport<T = any>(url: string | URL) {
         children: [],
         paths: [],
     };
-    globalThis.process ??= { env: "" };
+    globalThis.process ??= { env: {} };
     Function("module", "exports", code)(module, module.exports);
     return module.exports as T;
 }
@@ -26,6 +26,7 @@ globalThis.require ??= (...args) => {
     throw new Error(`require(${args.map((a) => JSON.stringify(a))}) is not supported!`);
 };
 
-function pkg2url(packageName) {
+function pkg2url(packageName: string | URL) {
     if (URL.canParse(packageName)) return packageName;
     return "https://unpkg.com/" + packageName;
+}

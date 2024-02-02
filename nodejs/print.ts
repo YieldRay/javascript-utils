@@ -10,26 +10,7 @@ const println: WriteFn = (s, ...args) => print(s + "\n", ...args);
 //@ts-ignore
 const eprintln: WriteFn = (s, ...args) => eprint(s + "\n", ...args);
 
-const printToStartOfLine = (() => {
-    type PrintToStartOfLineFn = {
-        (s: any): void;
-        setLastLength: (n: number) => void;
-    };
-    // do not use this func to print object or array!!!
-    let lastLineLength = 0;
-    const closure: PrintToStartOfLineFn = ((s: any) => {
-        const str = String(s); // ! convert any input to string, rather than what console.log() do
-        const neededLength = Math.max(lastLineLength - str.length, 0);
-        print("\r" + str + " ".repeat(neededLength) + "\b".repeat(neededLength));
-        lastLineLength = str.length;
-    }) as any;
-
-    // manually set the length of last print string, which is the count of the next print need to clear
-    closure.setLastLength = (n = 0) => (lastLineLength = n);
-    return closure;
-})();
-
-export { print, println, eprint, eprintln, printToStartOfLine };
+export { print, println, eprint, eprintln };
 
 // Usage:
 // for (let i = 10; i > 0; i--) {
@@ -40,3 +21,24 @@ export { print, println, eprint, eprintln, printToStartOfLine };
 //     );
 //     printToStartOfLine(`${i} `.repeat(i));
 // }
+
+export async function spinner<T>(callback: () => T): Promise<T>;
+export async function spinner<T>(title: string, callback: () => T): Promise<T>;
+export async function spinner<T>(title: string | (() => T), callback?: () => T): Promise<T> {
+    if (typeof title == "function") {
+        callback = title;
+        title = "";
+    }
+    let i = 0;
+    const spin = () => process.stderr.write(`  ${"⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[i++ % 10]} ${title}\r`);
+
+    const id = setInterval(spin, 100);
+    let result: T;
+    try {
+        result = await callback!();
+    } finally {
+        clearInterval(id);
+        process.stderr.write(" ".repeat(process.stdout.columns - 1) + "\r");
+    }
+    return result;
+}
