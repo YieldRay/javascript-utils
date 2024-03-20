@@ -5,19 +5,24 @@ export const ALGORITHM = {
     hash: { name: "SHA-256" },
 } as const;
 
+const rsaHashedKeyGenParams: RsaHashedKeyGenParams = {
+    ...ALGORITHM,
+    modulusLength: 2048,
+    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+};
+
+/* It's also possible to generate ECDSA key
+const ecKeyGenParams: EcKeyGenParams = {
+    name: "ECDSA",
+    namedCurve: "P-256",
+}; 
+*/
+
 export async function generateRSAKeyPair(): Promise<{
     privateKey: CryptoKey;
     publicKey: CryptoKey;
 }> {
-    const keyPair = await crypto.subtle.generateKey(
-        {
-            ...ALGORITHM,
-            modulusLength: 2048,
-            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-        },
-        true,
-        ["sign", "verify"]
-    );
+    const keyPair = await crypto.subtle.generateKey(rsaHashedKeyGenParams, true, ["sign", "verify"]);
 
     return keyPair;
 }
