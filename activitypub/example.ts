@@ -9,7 +9,7 @@ Deno.writeTextFileSync("./public.pem", publicKeyPem);
 Deno.writeTextFileSync("./private.pem", privateKeyPem);
 
 // const publicKey = await importPublicKey(Deno.readTextFileSync("./public.pem"));
-// const private = await importPrivateKey(Deno.readTextFileSync("./private.pem"));
+// const privateKey = await importPrivateKey(Deno.readTextFileSync("./private.pem"));
 
 const response = await signedFetch(
     { key: privateKey, keyId: "https://example.net/actor#main-key" },

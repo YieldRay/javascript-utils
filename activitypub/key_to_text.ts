@@ -43,5 +43,5 @@ export async function exportPublicKey(key: CryptoKey): Promise<string> {
 function arrayBufferToPem(buffer: ArrayBuffer, label: "PRIVATE KEY" | "PUBLIC KEY") {
     const pemHeader = `-----BEGIN ${label}-----`;
     const pemFooter = `-----END ${label}-----`;
-    return `${pemHeader}\n${encodeBase64(buffer)}${pemFooter}`;
+    return `${pemHeader}\n${encodeBase64(buffer)}\n${pemFooter}`;
 }
