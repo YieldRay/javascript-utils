@@ -1,15 +1,19 @@
 import { encodeBase64 } from "./base64.ts";
 
+export const ALGORITHM = {
+    name: "RSASSA-PKCS1-v1_5",
+    hash: { name: "SHA-256" },
+} as const;
+
 export async function generateRSAKeyPair(): Promise<{
     privateKey: CryptoKey;
     publicKey: CryptoKey;
 }> {
     const keyPair = await crypto.subtle.generateKey(
         {
-            name: "RSASSA-PKCS1-v1_5",
+            ...ALGORITHM,
             modulusLength: 2048,
             publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-            hash: { name: "SHA-256" },
         },
         true,
         ["sign", "verify"]

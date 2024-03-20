@@ -1,34 +1,14 @@
+import { ALGORITHM } from "./key_to_text.ts";
+
 export async function importPrivateKey(pem: string): Promise<CryptoKey> {
     const binaryBuffer = pemToBuffer(pem, "PRIVATE KEY");
-
-    const privateKey = await crypto.subtle.importKey(
-        "pkcs8",
-        binaryBuffer,
-        {
-            name: "RSASSA-PKCS1-v1_5",
-            hash: "SHA-256",
-        },
-        true,
-        ["sign"]
-    );
-
+    const privateKey = await crypto.subtle.importKey("pkcs8", binaryBuffer, ALGORITHM, true, ["sign"]);
     return privateKey;
 }
 
 export async function importPublicKey(pem: string): Promise<CryptoKey> {
     const binaryBuffer = pemToBuffer(pem, "PUBLIC KEY");
-
-    const publicKey = await crypto.subtle.importKey(
-        "spki",
-        binaryBuffer,
-        {
-            name: "RSASSA-PKCS1-v1_5",
-            hash: "SHA-256",
-        },
-        true,
-        ["verify"]
-    );
-
+    const publicKey = await crypto.subtle.importKey("spki", binaryBuffer, ALGORITHM, true, ["verify"]);
     return publicKey;
 }
 
