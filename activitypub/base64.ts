@@ -22,3 +22,19 @@ export function decodeBase64(str: string): Uint8Array {
     }
     return bytes;
 }
+
+export function encodeBase64URL(buf: ArrayBufferLike): string {
+    const base64 = encodeBase64(buf);
+    return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export function decodeBase64URL(str: string): Uint8Array {
+    const base64 = addPadding(str).replace(/-/g, "+").replace(/_/g, "/");
+    return decodeBase64(base64);
+}
+
+function addPadding(str: string): string {
+    const paddingLength = 4 - (str.length % 4);
+    if (paddingLength === 4) return str;
+    return str + "=".repeat(paddingLength);
+}
